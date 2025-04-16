@@ -1,70 +1,71 @@
 (function () {
   let lockActive = false;
 
-  function blockPlay(video, lockDuration) {
+  function blockPause(video, lockDuration) {
     if (lockActive) return;
 
     lockActive = true;
-    console.log("Paused. Locking playback for", lockDuration, "seconds.");
+    console.log("Play detected. Locking pause for", lockDuration, "seconds.");
 
-    const originalPlay = video.play;
-    video.play = function () {
-      console.log("Play attempt blocked during lock.");
-      return Promise.reject("Playback locked");
+    // Block pause attempts by overriding pause()
+    const originalPause = video.pause;
+    video.pause = function () {
+      console.log("Pause attempt blocked during lock.");
+      return;
     };
 
-    // Keyboard block (capture phase)
+    // Block keyboard shortcuts (Space / K)
     const keydownHandler = (e) => {
-      const isPlayKey = e.code === "Space" || e.key.toLowerCase() === "k";
-      if (isPlayKey) {
+      const isPauseKey = e.code === "Space" || e.key.toLowerCase() === "k";
+      if (isPauseKey) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        console.log("Keyboard shortcut blocked:", e.key);
+        console.log("Keyboard pause shortcut blocked:", e.key);
       }
     };
 
     const keyupHandler = (e) => {
-      const isPlayKey = e.code === "Space" || e.key.toLowerCase() === "k";
-      if (isPlayKey) {
+      const isPauseKey = e.code === "Space" || e.key.toLowerCase() === "k";
+      if (isPauseKey) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        console.log("Keyboard keyup blocked:", e.key);
+        console.log("Keyboard pause keyup blocked:", e.key);
       }
     };
 
     document.addEventListener("keydown", keydownHandler, true);
     document.addEventListener("keyup", keyupHandler, true);
 
-    // Play button
-    const playButton = document.querySelector('.ytp-play-button');
-    const playBtnHandler = (e) => {
-      e.stopImmediatePropagation();
+    // Block pause button click
+    const pauseButton = document.querySelector('.ytp-play-button');
+    const buttonHandler = (e) => {
       e.preventDefault();
-      console.log("Play button click blocked.");
+      e.stopImmediatePropagation();
+      console.log("Pause button click blocked.");
     };
-    if (playButton) {
-      playButton.addEventListener("click", playBtnHandler, true);
+    if (pauseButton) {
+      pauseButton.addEventListener("click", buttonHandler, true);
     }
 
-    // Video click (center of video)
+    // Block clicking on video to pause
     const videoClickHandler = (e) => {
-      e.stopImmediatePropagation();
       e.preventDefault();
-      console.log("Video click blocked.");
+      e.stopImmediatePropagation();
+      console.log("Video click (pause) blocked.");
     };
     video.addEventListener("click", videoClickHandler, true);
 
-    // Unlock after time
+    // Unlock after timeout
     setTimeout(() => {
-      video.play = originalPlay;
+      video.pause = originalPause;
       document.removeEventListener("keydown", keydownHandler, true);
       document.removeEventListener("keyup", keyupHandler, true);
-      if (playButton) {
-        playButton.removeEventListener("click", playBtnHandler, true);
+      if (pauseButton) {
+        pauseButton.removeEventListener("click", buttonHandler, true);
       }
       video.removeEventListener("click", videoClickHandler, true);
       lockActive = false;
-      console.log("Playback unlocked.");
+      console.log("Pause unlocked.");
     }, lockDuration * 1000);
   }
 
@@ -74,11 +75,11 @@
       if (video) {
         clearInterval(waitForVideo);
 
-        video.addEventListener("pause", () => {
+        video.addEventListener("play", () => {
           if (!video.ended) {
             chrome.storage.sync.get("lockDuration", (data) => {
               const duration = parseInt(data.lockDuration) || 10;
-              blockPlay(video, duration);
+              blockPause(video, duration);
             });
           }
         });
