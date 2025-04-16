@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 10px;
+        width: 200px;
+      }
+      input {
+        width: 100%;
+        padding: 5px;
+        font-size: 14px;
+      }
+      button {
+        margin-top: 8px;
+        width: 100%;
+        padding: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <label for="timeInput">Lock duration (seconds):</label>
+    <input id="timeInput" type="number" min="1" />
+    <button id="saveBtn">Save</button>
+    <p id="status"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>
